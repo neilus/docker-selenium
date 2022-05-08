@@ -1,0 +1,31 @@
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "seleniumGrid.hub.fullname" . -}}
+{{- $routerFullName := include "seleniumGrid.router.fullname" . -}}
+{{- $routerSvcName := trimPrefix "=" $routerFullName -}}
+{{- $myName := trimPrefix "=" $fullName  -}}
+{{- $hubSvcName := $myName -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $myName | quote }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: "/"
+            pathType: ImplementationSpecific
+            backend:
+              service:
+              {{ if .Values.isolateComponents }}
+                name: {{ $routerSvcName | quote }}
+                port:
+                  number: {{ .Values.components.router.port }}
+              {{ else }}
+                name: {{ $hubSvcName | quote }}
+                port:
+                  number: {{ .Values.hub.port }}
+              {{ end }}
+
+{{- end -}}

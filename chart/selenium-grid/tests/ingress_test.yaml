@@ -1,0 +1,137 @@
+suite: test the ingress
+templates:
+  - ingress.yaml
+  - router-service.yaml
+tests:
+  - it: should be no ingress by default
+    template: ingress.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should be an ingress when enabled
+    template: ingress.yaml
+    set:
+      isolateComponents: true
+      ingress:
+        enabled: true
+        host: "selenium-grid.dummy"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Ingress
+      - equal:
+          path: spec.rules[0].host
+          value: "selenium-grid.dummy"
+      - equal:
+          path: metadata.name
+          value: "selenium-hub"
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: "/"
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: "selenium-router"
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 4444
+
+  - it: should use the selenium port specified in the values
+    template: router-service.yaml
+    set:
+      isolateComponents: true
+      ingress:
+        enabled: true
+        host: "selenium-grid.dummy"
+      components:
+        router:
+          port: 1984
+    asserts:
+      - isKind:
+          of: Service
+      - equal:
+          path: spec.ports[0].port
+          value: 1984
+      - equal:
+          path: spec.ports[0].port
+          value: 4444
+        not: true
+
+  - it: should match the ingress backend with the router service port
+    template: ingress.yaml
+    set:
+      isolateComponents: true
+      ingress:
+        enabled: true
+        host: "selenium-grid.dummy"
+      components:
+        router:
+          port: 1984
+      hub:
+        port: 2022
+    asserts:
+      - isKind:
+          of: Ingress
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 1984
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 4444
+        not: true
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 2022
+        not: true
+
+
+  - it: should also work when we don't have the components isolated
+    template: ingress.yaml
+    set:
+      ingress:
+        enabled: true
+        host: "selenium-grid.dummy"
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: "selenium-grid.dummy"
+      - equal:
+          path: metadata.name
+          value: "selenium-hub"
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: "/"
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: "selenium-hub"
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 4444
+
+  - it: port override should work when we don't have the components isolated
+    template: ingress.yaml
+    set:
+      isolateComponents: false
+      ingress:
+        enabled: true
+        host: "selenium-grid.dummy"
+      components:
+        router:
+          port: 1984
+      hub:
+        port: 2022
+    asserts:
+      - isKind:
+          of: Ingress
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 1984
+        not: true
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 4444
+        not: true
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.port.number
+          value: 2022
