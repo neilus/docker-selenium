@@ -1,0 +1,36 @@
+{{- if .Values.autoscaling.edgeNode.enabled }}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ template "seleniumGrid.edgeNode.fullname" . }}
+  labels:
+    app: selenium-chrome-node
+    app.kubernetes.io/name: selenium-chrome-node
+    {{- include "seleniumGrid.commonLabels" . | nindent 4 }}
+    {{- with .Values.edgeNode.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.customLabels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ template "seleniumGrid.edgeNode.fullname" . }}
+  minReplicas: {{ .Values.autoscaling.edgeNode.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.edgeNode.maxReplicas }}
+  metrics:
+    {{- if .Values.autoscaling.edgeNode.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: {{ .Values.autoscaling.edgeNode.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.autoscaling.edgeNode.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        targetAverageUtilization: {{ .Values.autoscaling.edgeNode.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}

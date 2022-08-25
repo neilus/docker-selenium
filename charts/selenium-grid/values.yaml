@@ -606,3 +606,23 @@ edgeNode:
 
 # Custom labels for k8s resources
 customLabels: {}
+autoscaling:
+  chromeNode:
+    enabled: False
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 15
+    targetMemoryUtilizationPercentage: 15
+  edgeNode:
+    enabled: False
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 15
+    targetMemoryUtilizationPercentage: 15
+  firefoxNode:
+    enabled: False
+    minReplicas: 1
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 15
+    targetMemoryUtilizationPercentage: 15
+
